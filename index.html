@@ -1,12 +1,36 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>IP Geolocation</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Buscador de Geolocalización por IP</h1>
+    <form id="form" class="card">
+      <label for="input">
+        IP del usuario
+        <input 
+          required 
+          id="input" 
+          type="text" 
+          placeholder="Introduce una IP (ej. 54.85.132.205)" 
+          aria-describedby="hint"
+        >
+        <small id="hint">Ejemplo: 54.85.132.205</small>
+      </label>
+      <button type="submit" id="submit" class="btn">Buscar información</button>
+    </form>
+
+    <section id="results" class="results" aria-live="polite">
+      <!-- Resultados aparecerán aquí -->
+    </section>
+  </main>
+
   <script type="module">
     const OPTIONS = {
       method: 'GET',
@@ -19,59 +43,48 @@
     const fetchIpInfo = ip => {
       return fetch(`https://freeipapi.com/api/json/${ip}`, OPTIONS)
         .then(res => res.json())
-        .catch(err => console.error(err))
+        .catch(err => {
+          console.error(err);
+          return null;
+        });
     }
 
-    const $ = selector => document.querySelector(selector)
-
-    const $form = $('#form')
-    const $input = $('#input')
-    const $submit = $('#submit')
-    const $results = $('#results')
+    const $ = selector => document.querySelector(selector);
+    const $form = $('#form');
+    const $input = $('#input');
+    const $submit = $('#submit');
+    const $results = $('#results');
 
     $form.addEventListener('submit', async (event) => {
-      event.preventDefault()
-      const {value} = $input
-      if (!value) return
+      event.preventDefault();
+      const { value } = $input;
+      if (!value) return;
 
-      $submit.setAttribute('disabled', '')
-      $submit.setAttribute('aria-busy', 'true')
+      $submit.setAttribute('disabled', '');
+      $submit.setAttribute('aria-busy', 'true');
+      $results.innerHTML = '<p class="loading">Cargando...</p>';
 
-      const ipInfo = await fetchIpInfo(value)
+      const ipInfo = await fetchIpInfo(value);
 
-      if (ipInfo) {
-        $results.innerHTML = JSON.stringify(ipInfo, null, 2)
+      if (ipInfo && ipInfo.ipAddress) {
+        $results.innerHTML = `
+          <div class="result-card">
+            <h3>Información de la IP: ${ipInfo.ipAddress}</h3>
+            <p><strong>País:</strong> ${ipInfo.countryName}</p>
+            <p><strong>Ciudad:</strong> ${ipInfo.city}</p>
+            <p><strong>Región:</strong> ${ipInfo.region}</p>
+            <p><strong>Latitud:</strong> ${ipInfo.latitude}</p>
+            <p><strong>Longitud:</strong> ${ipInfo.longitude}</p>
+            <p><strong>ISP:</strong> ${ipInfo.isp}</p>
+          </div>
+        `;
+      } else {
+        $results.innerHTML = '<p class="error">No se encontró información para esta IP.</p>';
       }
 
-      $submit.removeAttribute('disabled')
-      $submit.removeAttribute('aria-busy')
-
-    })
+      $submit.removeAttribute('disabled');
+      $submit.removeAttribute('aria-busy');
+    });
   </script>
-</head>
-
-<body>
-  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
-
-  <main class="container">
-    <form id="form">
-      <label>
-        IP del usuario
-        <input required id="input" type="text" placeholder="Introduce aquí la IP">
-        <small>Por ejemplo: 54.85.132.205</small>
-      </label>
-
-      <button type="submit" id="submit">
-        Buscar información de esta IP
-      </button>
-
-    </form>
-
-    <div>
-      <pre id="results"></pre>
-    </div>
-  </main>
-
 </body>
-
 </html>
